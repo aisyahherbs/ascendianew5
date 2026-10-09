@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'Work Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+}
+
+.font-display {
+    font-family: 'Space Grotesk', ui-sans-serif, system-ui;
+}
+
+.font-mono,
+code,
+.num {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+    :root {
+        --background: 36 33% 98%;
+        --foreground: 200 18% 12%;
+        --card: 0 0% 100%;
+        --card-foreground: 200 18% 12%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 200 18% 12%;
+        --primary: 174 62% 28%;
+        --primary-foreground: 0 0% 98%;
+        --secondary: 36 28% 94%;
+        --secondary-foreground: 200 18% 16%;
+        --muted: 36 22% 93%;
+        --muted-foreground: 200 10% 40%;
+        --accent: 186 45% 92%;
+        --accent-foreground: 200 18% 16%;
+        --destructive: 0 72% 52%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 36 18% 86%;
+        --input: 36 18% 86%;
+        --ring: 174 62% 28%;
+        --radius: 0.625rem;
+        --chart-1: 174 62% 28%;
+        --chart-2: 199 70% 38%;
+        --chart-3: 36 55% 55%;
+        --chart-4: 160 45% 35%;
+        --chart-5: 210 55% 45%;
+
+        /* ---- surface & ink ---- */
+        --surface: 36 33% 99%;
+        --surface-2: 36 22% 96%;
+        --surface-3: 36 18% 93%;
+
+        /* ---- brand ---- */
+        --primary-2: 186 58% 34%;
+        --primary-soft: 174 55% 92%;
+        --primary-soft-foreground: 174 62% 18%;
+
+        /* ---- semantic status ---- */
+        --info: 199 78% 40%;
+        --info-soft: 199 70% 92%;
+        --info-soft-foreground: 199 70% 22%;
+        --success: 158 55% 32%;
+        --success-soft: 158 45% 92%;
+        --success-soft-foreground: 158 55% 18%;
+        --warning: 36 85% 44%;
+        --warning-soft: 36 90% 92%;
+        --warning-soft-foreground: 36 85% 22%;
+        --danger: 0 72% 52%;
+        --danger-soft: 0 85% 95%;
+        --danger-soft-foreground: 0 70% 32%;
+
+        --focus: 186 58% 34%;
+        --shadow-color: 200 20% 10%;
+
+        /* ---- sidebar (dark neutral) ---- */
+        --sidebar: 200 24% 13%;
+        --sidebar-foreground: 0 0% 98%;
+        --sidebar-muted: 200 18% 21%;
+        --sidebar-border: 200 16% 24%;
+        --sidebar-active: 174 62% 32%;
+        --sidebar-active-foreground: 0 0% 100%;
+
+        /* ---- 7 warna bonus / chart ---- */
+        --bonus-1: 174 62% 28%;
+        --bonus-2: 199 78% 40%;
+        --bonus-3: 36 85% 44%;
+        --bonus-4: 158 55% 32%;
+        --bonus-5: 14 78% 48%;
+        --bonus-6: 220 55% 46%;
+        --bonus-7: 330 48% 44%;
+
+        /* ---- kategori pengumuman ---- */
+        --announce-pengumuman: 199 78% 40%;
+        --announce-promo: 14 78% 48%;
+        --announce-reward: 36 85% 44%;
+        --announce-penting: 0 72% 52%;
+        --announce-berita: 220 55% 46%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+    h1, h2, h3, h4 {
+        font-family: 'Space Grotesk', ui-sans-serif, system-ui;
+    }
+}
+
+::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+}
+::-webkit-scrollbar-thumb {
+    background: hsl(200 10% 72%);
+    border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(200 10% 60%);
+}
+
+::selection {
+    background: hsl(var(--primary) / 0.18);
+}
