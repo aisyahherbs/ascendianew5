@@ -43,5 +43,4 @@ export const BONUS_LIST = [
   { key: 'bonus_prestasi', label: 'Bonus Prestasi', group: 'Omset Penjualan' },
   { key: 'bonus_kepemimpinan', label: 'Bonus Kepemimpinan', group: 'Omset Penjualan' },
   { key: 'bonus_sharing_profit', label: 'Bonus Sharing Profit', group: 'Perusahaan' },
-  { key: 'bonus_reward', label: 'Special Reward', group: 'Perusahaan' },
 ];

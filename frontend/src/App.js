@@ -21,6 +21,7 @@ import Simulator from './pages/Simulator';
 import PlanPage from './pages/PlanPage';
 import SettingsPage from './pages/SettingsPage';
 import Payout from './pages/Payout';
+import SpecialReward from './pages/SpecialReward';
 import Announcements from './pages/Announcements';
 
 function Protected({ children, roles, page }) {
@@ -52,7 +53,8 @@ function Shell() {
       <Route path="/announcements" element={<Protected page="announcements"><Announcements /></Protected>} />
       <Route path="/periods" element={<Protected roles={['admin_pusat', 'admin_provinsi']} page="periods"><Periods /></Protected>} />
       <Route path="/bonus" element={<Protected roles={['admin_pusat', 'admin_provinsi', 'stokis']} page="bonus"><BonusReport /></Protected>} />
-      <Route path="/payout" element={<Protected roles={['admin_pusat', 'admin_provinsi', 'stokis']} page="payout"><Payout /></Protected>} />
+      <Route path="/payout" element={<Protected roles={['admin_pusat']}><Payout /></Protected>} />
+      <Route path="/special-reward" element={<Protected roles={['admin_pusat']}><SpecialReward /></Protected>} />
       <Route path="/transactions" element={<Protected roles={['admin_pusat', 'admin_provinsi', 'stokis']} page="transactions"><Transactions /></Protected>} />
       <Route path="/statement" element={<Protected page="statement"><Statement /></Protected>} />
       <Route path="/products" element={<Protected page="products"><Products /></Protected>} />

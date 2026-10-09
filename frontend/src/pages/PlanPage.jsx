@@ -101,9 +101,15 @@ export default function PlanPage() {
                   <span>{k}</span><span className="font-mono">{pct(v)} omset nasional</span>
                 </div>
               ))}
-              <div className="flex justify-between rounded-lg border bg-background px-3 py-2">
-                <span>Special Reward</span><span className="font-mono">{pct(p.reward_pool_rate)} (min. {p.reward_qualify_rank})</span>
-              </div>
+              {p.reward_pool_rate != null ? (
+                <div className="flex justify-between rounded-lg border bg-background px-3 py-2">
+                  <span>Special Reward</span><span className="font-mono">{pct(p.reward_pool_rate)} (min. {p.reward_qualify_rank})</span>
+                </div>
+              ) : (
+                <div className="flex justify-between rounded-lg border bg-background px-3 py-2 text-muted-foreground">
+                  <span>Special Reward</span><span className="text-xs">dikelola langsung oleh Pusat</span>
+                </div>
+              )}
             </div>
             <div className="mt-4 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
               <p className="font-medium text-foreground">Istilah</p>

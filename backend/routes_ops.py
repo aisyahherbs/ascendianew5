@@ -24,7 +24,6 @@ BONUS_FIELDS = [
     ("bonus_prestasi", "Bonus Prestasi"),
     ("bonus_kepemimpinan", "Bonus Kepemimpinan"),
     ("bonus_sharing_profit", "Bonus Sharing Profit"),
-    ("bonus_reward", "Special Reward"),
 ]
 
 
@@ -209,7 +208,7 @@ def _filter_results(run: Dict[str, Any], vis: Optional[set]) -> Dict[str, Any]:
 async def bonus_runs(user=Depends(current_user)):
     await core.assert_any_page(user, ["bonus"])
     rows = await db.bonus_runs.find({}, {"results": 0}).sort("period_key", -1).to_list(200)
-    return [clean(r) for r in rows]
+    return [core.strip_reward(clean(r), user["role"]) for r in rows]
 
 
 @router.get("/bonus/preview")
@@ -221,7 +220,7 @@ async def bonus_preview(user=Depends(current_user)):
     payload = {"period_key": snap["period_key"], "label": core.period_label(snap["period_key"]),
                "closed": snap["closed"], "summary": run.get("summary", {}),
                "results": run.get("results", []), "stokis_fees": run.get("stokis_fees", [])}
-    return _filter_results(payload, vis)
+    return core.strip_reward(_filter_results(payload, vis), user["role"])
 
 
 @router.get("/bonus/statement/{member_id}")
@@ -288,7 +287,7 @@ async def bonus_run(key: str, user=Depends(current_user)):
                "results": live["results"], "stokis_fees": live.get("stokis_fees", [])}
     payload = clean(run)
     payload["closed"] = closed
-    return _filter_results(payload, vis)
+    return core.strip_reward(_filter_results(payload, vis), user["role"])
 
 
 # ============================================================== AGGREGATE / PAYOUT
@@ -372,11 +371,8 @@ def _aggregate_results(runs: List[Dict[str, Any]], vis: Optional[set]) -> List[D
     return sorted(agg.values(), key=lambda x: -x["total_bonus_bv"])
 
 
-@router.get("/payout")
-async def payout(mode: str = "period", key: Optional[str] = None,
-                 user=Depends(require_roles("admin_pusat", "admin_provinsi", "stokis"))):
-    """Detail omset masuk, bonus yang dikeluarkan, persentase payout & sisa perusahaan."""
-    await core.assert_any_page(user, ["payout", "bonus"])
+async def _payout_data(user: Dict[str, Any], mode: str, key: Optional[str]) -> Dict[str, Any]:
+    """Hitung omset masuk, bonus keluar, fee stokis, payout & sisa perusahaan."""
     vis = await _visible_ids(user)
     rng = await core.resolve_range(mode, key)
     runs = await _runs_for(rng["keys"])
@@ -444,6 +440,9 @@ async def payout(mode: str = "period", key: Optional[str] = None,
             "reward_pool_bv": s.get("reward_pool_bv", 0),
         })
 
+    reward_pool_total = round(sum(float(p.get("reward_pool_bv", 0) or 0)
+                                  for p in period_rows), 2)
+
     return {
         "mode": rng["mode"], "key": rng["key"], "label": rng["label"],
         "date_from": rng["start"], "date_to": rng["end"],
@@ -462,11 +461,104 @@ async def payout(mode: str = "period", key: Optional[str] = None,
         "total_payout_percent": total_payout_pct,
         "payout_percent": payout_pct, "company_percent": company_pct,
         "company_bv": company_bv, "company_rp": round(company_bv * PV_TO_RP, 2),
+        "reward_pool_bv": reward_pool_total,
+        "reward_pool_rp": round(reward_pool_total * PV_TO_RP, 2),
         "member_count": len(results),
         "earner_count": sum(1 for r in results if r["total_bonus_bv"] > 0),
         "results": results,
         "products": sorted(prod.values(), key=lambda x: -x["pv"]),
         "pv_to_rp": PV_TO_RP,
+    }
+
+
+@router.get("/payout")
+async def payout(mode: str = "period", key: Optional[str] = None,
+                 user=Depends(require_roles("admin_pusat"))):
+    """Payout & omset perusahaan — KHUSUS Admin Pusat.
+
+    Admin Provinsi & Stokis tidak boleh melihat payout maupun sisa perusahaan;
+    mereka memakai `/bonus/report` yang hanya berisi data sesuai wewenangnya.
+    """
+    return await _payout_data(user, mode, key)
+
+
+@router.get("/bonus/report")
+async def bonus_report(mode: str = "period", key: Optional[str] = None,
+                       user=Depends(require_roles("admin_pusat", "admin_provinsi", "stokis"))):
+    """Laporan bonus per member untuk halaman Laporan Bonus.
+
+    Tidak memuat persentase payout, sisa perusahaan, maupun pool Special Reward
+    (itu hanya untuk Admin Pusat di halaman Payout & Special Reward).
+    """
+    await core.assert_any_page(user, ["bonus"])
+    data = await _payout_data(user, mode, key)
+    buang = ("total_payout_bv", "total_payout_rp", "total_payout_percent",
+             "payout_percent", "company_percent", "company_bv", "company_rp",
+             "reward_pool_bv", "reward_pool_rp", "products")
+    out = {k: v for k, v in data.items() if k not in buang}
+    out["periods"] = [{k: v for k, v in p.items()
+                       if k not in ("payout_percent", "reward_pool_bv")}
+                      for p in data["periods"]]
+    return out
+
+
+@router.get("/special-reward")
+async def special_reward(mode: str = "period", key: Optional[str] = None,
+                         user=Depends(require_roles("admin_pusat"))):
+    """Dana Special Reward — KHUSUS Admin Pusat.
+
+    Pool 2% tetap dihitung otomatis agar pusat tahu dana yang tersedia dan tidak
+    melebihi payout, tetapi pembagiannya sepenuhnya kuasa pusat (boleh berupa BV
+    maupun non-BV seperti barang/perjalanan) sehingga TIDAK masuk total bonus
+    maupun slip bonus member.
+    """
+    data = await _payout_data(user, mode, key)
+    rng = await core.resolve_range(mode, key)
+    runs = await _runs_for(rng["keys"])
+    kualifikasi: Dict[str, Dict[str, Any]] = {}
+    per_periode = []
+    rate = 0.0
+    qualify_rank = ""
+    for run in runs:
+        s = run.get("summary", {})
+        rate = s.get("reward_rate", rate) or rate
+        qualify_rank = s.get("reward_qualify_rank", qualify_rank) or qualify_rank
+        per_periode.append({
+            "period_key": run["period_key"], "label": run["label"], "status": run["status"],
+            "omset_pv": s.get("total_omset_pv", 0),
+            "pool_bv": s.get("reward_pool_bv", 0),
+            "jumlah_kualifikasi": len(s.get("reward_allocation") or []),
+        })
+        for a in (s.get("reward_allocation") or []):
+            cur = kualifikasi.setdefault(a["member_id"], {
+                "member_id": a["member_id"], "name": a.get("name", ""),
+                "rank": a.get("rank", ""), "periode": 0, "alokasi_rata_bv": 0.0})
+            cur["periode"] += 1
+            cur["alokasi_rata_bv"] = round(
+                cur["alokasi_rata_bv"] + float(a.get("alokasi_rata_bv", 0) or 0), 2)
+            cur["rank"] = a.get("rank", cur["rank"])
+
+    pool = data["reward_pool_bv"]
+    omset = data["omset"]["total"]
+    sisa_perusahaan = data["company_bv"]
+    return {
+        "mode": data["mode"], "key": data["key"], "label": data["label"],
+        "date_from": data["date_from"], "date_to": data["date_to"],
+        "rate": rate, "qualify_rank": qualify_rank,
+        "omset_total_pv": omset,
+        "pool_bv": pool, "pool_rp": round(pool * PV_TO_RP, 2),
+        "pool_percent": round(pool / omset * 100, 2) if omset else 0.0,
+        "payout_percent": data["total_payout_percent"],
+        "company_percent": data["company_percent"],
+        "company_bv": sisa_perusahaan,
+        "sisa_setelah_reward_bv": round(sisa_perusahaan - pool, 2),
+        "periods": per_periode,
+        "qualifiers": sorted(kualifikasi.values(), key=lambda x: -x["alokasi_rata_bv"]),
+        "pv_to_rp": PV_TO_RP,
+        "catatan": ("Pool ini hanya acuan dana. Pembagian Special Reward sepenuhnya "
+                    "kuasa Admin Pusat dan tidak harus mengikuti porsi payout — bisa "
+                    "diberikan dalam bentuk BV maupun non-BV (barang, perjalanan, dll). "
+                    "Karena itu nilainya tidak masuk total bonus maupun slip bonus member."),
     }
 
 
@@ -566,14 +658,22 @@ async def dashboard(user=Depends(current_user)):
             "omset_total": omset_perk + omset_penj,
             "total_bonus_bv": round(sum(r["total_bonus_bv"] for r in results), 2),
             "bonus_composition": comp, "rank_distribution": rank_dist,
-            "trend": trend[-8:], "recent_transactions": [clean(t) for t in recent],
+            "recent_transactions": [clean(t) for t in recent],
             "top_earners": sorted([{"member_id": r["member_id"], "name": r["name"],
                                     "rank": r["rank"], "total": r["total_bonus_bv"]}
                                    for r in results], key=lambda x: -x["total"])[:5],
-            "stokis_fees": run.get("stokis_fees", []),
-            "stokis_fee_total": round(sum(float(f.get("fee_bv", 0) or 0)
-                                          for f in run.get("stokis_fees", [])), 2),
         })
+        if role == "admin_pusat":
+            # Tren & fee stokis bersifat NASIONAL -> hanya untuk Admin Pusat.
+            payload.update({
+                "trend": trend[-8:],
+                "stokis_fees": run.get("stokis_fees", []),
+                "stokis_fee_total": round(sum(float(f.get("fee_bv", 0) or 0)
+                                              for f in run.get("stokis_fees", [])), 2),
+            })
+        else:
+            payload["scope_note"] = ("Angka di bawah ini hanya mencakup wilayah "
+                                     "wewenang Anda, bukan data nasional.")
     elif role == "stokis":
         members = await db.users.find({"stokis_id": user["member_id"], "deleted": {"$ne": True}}
                                       ).to_list(100000)
@@ -631,7 +731,7 @@ async def simulate(body: SimIn, user=Depends(current_user)):
         if m.penjualan_pv:
             txs.append(ETx(member_id=m.id, pv=float(m.penjualan_pv), kind="penjualan"))
     res = run_period(members, txs, body.period_label or "Simulasi", cfg)
-    return res
+    return core.strip_reward(res, user["role"])
 
 
 # ============================================== SIMULASI TAMBAH MEMBER (tanpa simpan)

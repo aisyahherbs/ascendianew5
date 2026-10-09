@@ -972,8 +972,9 @@ async def marketing_plan(user=Depends(current_user)):
         "leadership_depth": cfg["leadership_depth"],
         "bimbingan_rate": cfg["bimbingan_rate"],
         "sharing_profit": cfg["sharing_profit"],
-        "reward_pool_rate": cfg["reward_pool_rate"],
-        "reward_qualify_rank": cfg["reward_qualify_rank"],
+        **({"reward_pool_rate": cfg["reward_pool_rate"],
+            "reward_qualify_rank": cfg["reward_qualify_rank"]}
+           if user["role"] == "admin_pusat" else {}),
         "pairing_cap_majestic": cfg["pairing_cap_majestic"],
     }
 

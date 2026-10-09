@@ -74,8 +74,13 @@ export default function Dashboard() {
 
 function AdminView({ d }) {
   const comp = Object.entries(d.bonus_composition || {}).map(([k, v]) => ({ name: k.replace('Bonus ', ''), bv: v }));
+  const nasional = d.role === 'admin_pusat';
   return (
     <div className="grid gap-4 md:gap-6">
+      {d.scope_note ? (
+        <p className="rounded-xl border border-[hsl(var(--info)/0.3)] bg-[hsl(var(--info)/0.08)] px-3 py-2 text-[12.5px]"
+          data-testid="dashboard-scope-note">{d.scope_note}</p>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard testid="kpi-omset-total" label="Omset Periode Ini" value={`${num(d.omset_total)} PV`} sub={rp(d.omset_total * 1000)} icon={TrendingUp} tone="primary" />
         <StatCard testid="kpi-omset-perkembangan" label="Omset Perkembangan" value={`${num(d.omset_perkembangan)} PV`} sub="Sponsor · Pasangan · Bimbingan" icon={Coins} tone="info" />
@@ -83,15 +88,18 @@ function AdminView({ d }) {
         <StatCard testid="kpi-total-bonus" label="Total Bonus" value={`${num(d.total_bonus_bv)} BV`} sub={rp(d.total_bonus_bv * 1000)} icon={Wallet} tone="success" />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className={`grid gap-3 sm:grid-cols-2 ${nasional ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
         <StatCard testid="kpi-members" label="Total Pengguna" value={num(d.total_members)} sub={`${num(d.active_members)} aktif`} icon={Users} tone="violet" />
         <StatCard testid="kpi-member-role" label="Member" value={num(d.by_role?.member || 0)} sub="distributor terdaftar" />
         <StatCard testid="kpi-stokis" label="Stokis" value={num(d.by_role?.stokis || 0)} sub="titik pendaftaran & omset" />
         <StatCard testid="kpi-admin-provinsi" label="Admin Provinsi" value={num(d.by_role?.admin_provinsi || 0)} sub="pengelola wilayah" />
-        <StatCard testid="kpi-stokis-fee-total" label="Fee Perantara Stokis" value={`${num(d.stokis_fee_total || 0)} BV`} sub="masuk total payout" icon={Wallet} tone="warning" />
+        {nasional ? (
+          <StatCard testid="kpi-stokis-fee-total" label="Fee Perantara Stokis" value={`${num(d.stokis_fee_total || 0)} BV`} sub="masuk total payout" icon={Wallet} tone="warning" />
+        ) : null}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className={`grid gap-4 ${nasional ? 'lg:grid-cols-3' : ''}`}>
+        {nasional ? (
         <div className="rounded-xl border bg-card p-4 lg:col-span-2">
           <h3 className="font-display text-base font-semibold">Tren Omset & Bonus per Periode</h3>
           <div className="mt-4 h-64">
@@ -107,8 +115,9 @@ function AdminView({ d }) {
             </ResponsiveContainer>
           </div>
         </div>
+        ) : null}
         <div className="rounded-xl border bg-card p-4">
-          <h3 className="font-display text-base font-semibold">Komposisi 7 Bonus (BV)</h3>
+          <h3 className="font-display text-base font-semibold">Komposisi Bonus (BV)</h3>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={comp} layout="vertical" margin={{ left: 20 }}>

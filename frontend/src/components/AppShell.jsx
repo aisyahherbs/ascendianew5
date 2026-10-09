@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  BarChart3, Boxes, CalendarClock, Coins, FileText, Gauge, LayoutDashboard, LogOut,
+  BarChart3, Boxes, CalendarClock, Coins, FileText, Gauge, Gift, LayoutDashboard, LogOut,
   Megaphone, Menu, Network, Percent, Receipt, Settings, ShieldCheck, Users, X, BookOpen, Warehouse,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
@@ -34,7 +34,8 @@ const GROUPS = [
       { to: '/transactions', label: 'Omset', icon: Receipt, roles: OPS, page: 'transactions' },
       { to: '/periods', label: 'Tutup Buku', icon: CalendarClock, roles: ['admin_pusat', 'admin_provinsi'], page: 'periods' },
       { to: '/bonus', label: 'Laporan Bonus', icon: BarChart3, roles: OPS, page: 'bonus' },
-      { to: '/payout', label: 'Payout & Omset', icon: Percent, roles: OPS, page: 'payout' },
+      { to: '/payout', label: 'Payout & Omset', icon: Percent, roles: ['admin_pusat'] },
+      { to: '/special-reward', label: 'Special Reward', icon: Gift, roles: ['admin_pusat'] },
       { to: '/statement', label: 'Slip Bonus', icon: FileText, roles: ALL, page: 'statement' },
     ],
   },

@@ -22,7 +22,7 @@ export default function BonusReport() {
     setLoading(true);
     setSel(null);
     try {
-      const { data: d } = await api.get('/payout', { params: { mode: range.mode, key: range.key } });
+      const { data: d } = await api.get('/bonus/report', { params: { mode: range.mode, key: range.key } });
       setData(d);
     } catch (e) { setData(null); toast.error(errMsg(e)); } finally { setLoading(false); }
   }, [range]);
@@ -55,10 +55,7 @@ export default function BonusReport() {
     return sum;
   }, [data]);
 
-  const rewardPool = useMemo(
-    () => (data?.periods || []).reduce((a, p) => a + (p.reward_pool_bv || 0), 0),
-    [data]
-  );
+  const rewardPool = 0; // Special Reward dikelola khusus oleh Admin Pusat
 
   const allClosed = (data?.periods || []).length > 0 && data.periods.every((p) => p.status === 'closed');
 
@@ -70,7 +67,7 @@ export default function BonusReport() {
   };
 
   return (
-    <AppShell title="Laporan Bonus" subtitle="Rincian perhitungan 7 bonus per member, bisa diaudit baris per baris"
+    <AppShell title="Laporan Bonus" subtitle="Rincian perhitungan bonus per member, bisa diaudit baris per baris"
       actions={<Button variant="outline" onClick={exportCsv} data-testid="bonus-report-export-csv-button"><Download className="mr-1 h-4 w-4" /> CSV</Button>}>
       <div className="grid gap-4">
         <div className="grid gap-3 rounded-xl border bg-card p-3">
@@ -90,8 +87,8 @@ export default function BonusReport() {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard testid="bonus-total" label="Total Bonus" value={`${num(totals.total)} BV`} sub={rp(data?.bonus?.total_rp || 0)} tone="primary" />
           <StatCard testid="bonus-omset" label="Omset Rentang Ini" value={`${num(data?.omset?.total)} PV`} sub={`Perk ${num(data?.omset?.perkembangan)} · Penj ${num(data?.omset?.penjualan)}`} />
-          <StatCard testid="bonus-payout-percent" label="Persentase Payout" value={`${num(data?.payout_percent, 2)}%`} sub={`Sisa perusahaan ${num(data?.company_percent, 2)}%`} tone="soft" />
-          <StatCard testid="bonus-reward-pool" label="Pool Sharing & Reward" value={`${num(sharingPool + rewardPool)} BV`} sub={`Sharing ${num(sharingPool)} · Reward ${num(rewardPool)}`} />
+          <StatCard testid="bonus-earner-count" label="Member Berbonus" value={num(data?.earner_count || 0)} sub={`dari ${num(data?.member_count || 0)} member aktif omset`} tone="soft" />
+          <StatCard testid="bonus-sharing-pool" label="Pool Sharing Profit" value={`${num(sharingPool)} BV`} sub="Director & Executive Director" />
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">

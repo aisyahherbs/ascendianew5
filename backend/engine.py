@@ -297,7 +297,6 @@ def run_period(members: List[MemberIn], txs: List[TxIn],
     b_prestasi = {m.id: 0.0 for m in members}
     b_kepemimpinan = {m.id: 0.0 for m in members}
     b_sharing = {m.id: 0.0 for m in members}
-    b_reward = {m.id: 0.0 for m in members}
 
     # Penonaktifan jenis bonus per member: bonus TIDAK dihitung sama sekali.
     def off(mid: str, key: str) -> bool:
@@ -493,25 +492,25 @@ def run_period(members: List[MemberIn], txs: List[TxIn],
                          total_omset, rate, share)
 
     # ============================================================ 7. SPECIAL REWARD
+    # Pool tetap dihitung otomatis supaya Admin Pusat tahu dana yang tersedia dan
+    # tidak melebihi payout. TETAPI nilainya TIDAK dibagikan otomatis sebagai bonus:
+    # tidak masuk total bonus member, tidak masuk slip bonus, dan tidak ada baris
+    # rumus di rincian member. Pembagiannya sepenuhnya kuasa pusat (bisa BV / non-BV).
     reward_pool = total_omset * cfg['reward_pool_rate']
     r_elig = [m.id for m in members
               if rank_index(rank[m.id]) >= rank_index(cfg['reward_qualify_rank']) and qualified[m.id]]
-    if r_elig:
-        share = reward_pool / len(r_elig)
-        for mid in r_elig:
-            if off(mid, "reward"):
-                continue
-            b_reward[mid] += share
-            add_line(mid, "Special Reward",
-                     f"2% omset nasional dibagi {len(r_elig)} kualifikasi "
-                     f"(min. {cfg['reward_qualify_rank']})", total_omset, cfg['reward_pool_rate'], share)
+    r_terima = [mid for mid in r_elig if not off(mid, "reward")]
+    share_ref = round(reward_pool / len(r_terima), 2) if r_terima else 0.0
+    nama = {m.id: m.name for m in members}
+    reward_allocation = [{"member_id": mid, "name": nama.get(mid, mid), "rank": rank[mid],
+                          "alokasi_rata_bv": share_ref} for mid in r_terima]
 
     # ---------------- assemble
     results = []
     for m in members:
         mid = m.id
         total = (b_sponsor[mid] + b_pasangan[mid] + b_bimbingan[mid] + b_prestasi[mid]
-                 + b_kepemimpinan[mid] + b_sharing[mid] + b_reward[mid])
+                 + b_kepemimpinan[mid] + b_sharing[mid])
         results.append(dict(
             member_id=mid, name=m.name, period=period_label,
             membership=membership[mid], rank=rank[mid],
@@ -528,7 +527,6 @@ def run_period(members: List[MemberIn], txs: List[TxIn],
             bonus_prestasi=round(b_prestasi[mid], 2),
             bonus_kepemimpinan=round(b_kepemimpinan[mid], 2),
             bonus_sharing_profit=round(b_sharing[mid], 2),
-            bonus_reward=round(b_reward[mid], 2),
             total_bonus_bv=round(total, 2),
             total_bonus_rp=round(total * PV_TO_RP, 2),
             carry=carry_out.get(mid, {}),
@@ -544,6 +542,9 @@ def run_period(members: List[MemberIn], txs: List[TxIn],
                      total_bonus_bv=round(sum(r["total_bonus_bv"] for r in results), 2),
                      sharing_profit_pools=sharing_pools,
                      reward_pool_bv=round(reward_pool, 2),
-                     reward_qualifiers=r_elig),
+                     reward_rate=cfg['reward_pool_rate'],
+                     reward_qualify_rank=cfg['reward_qualify_rank'],
+                     reward_qualifiers=r_terima,
+                     reward_allocation=reward_allocation),
         results=results,
     )

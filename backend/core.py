@@ -55,6 +55,26 @@ BONUS_TYPES: List[Dict[str, str]] = [
 ]
 BONUS_KEYS = [b["key"] for b in BONUS_TYPES]
 
+# Special Reward dikelola PENUH oleh Admin Pusat: pool-nya tetap dihitung otomatis
+# (agar pusat tahu dana yang tersedia dan tidak melebihi payout), tetapi angka,
+# rumus, dan daftar kualifikasinya TIDAK ditampilkan ke peran lain dan TIDAK masuk
+# total bonus / slip member karena pembagiannya bisa berupa BV maupun non-BV.
+REWARD_SUMMARY_KEYS = ("reward_pool_bv", "reward_rate", "reward_qualify_rank",
+                       "reward_qualifiers", "reward_allocation")
+
+
+def strip_reward(payload: Optional[Dict[str, Any]], viewer_role: str) -> Optional[Dict[str, Any]]:
+    """Hapus seluruh data Special Reward bila penonton bukan Admin Pusat."""
+    if payload is None or viewer_role == "admin_pusat":
+        return payload
+    out = dict(payload)
+    for k in REWARD_SUMMARY_KEYS:
+        out.pop(k, None)
+    if isinstance(out.get("summary"), dict):
+        out["summary"] = {k: v for k, v in out["summary"].items()
+                          if k not in REWARD_SUMMARY_KEYS}
+    return out
+
 # Halaman yang bisa ditutup untuk bawahan. Dashboard & Pengaturan tidak bisa ditutup
 # supaya pengguna tidak terjebak tanpa halaman apa pun.
 PAGES: List[Dict[str, Any]] = [
@@ -69,8 +89,6 @@ PAGES: List[Dict[str, Any]] = [
     {"key": "periods", "label": "Tutup Buku", "path": "/periods",
      "roles": ["admin_provinsi"]},
     {"key": "bonus", "label": "Laporan Bonus", "path": "/bonus",
-     "roles": ["admin_provinsi", "stokis"]},
-    {"key": "payout", "label": "Payout & Omset", "path": "/payout",
      "roles": ["admin_provinsi", "stokis"]},
     {"key": "statement", "label": "Slip Bonus", "path": "/statement",
      "roles": ["admin_provinsi", "stokis", "member"]},
