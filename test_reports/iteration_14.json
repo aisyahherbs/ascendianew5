@@ -1,0 +1,41 @@
+{
+  "summary": "Validated access-control + visibility changes: (1) Payout & Omset page and new Special Reward page restricted to Admin Pusat only; (2) Admin Provinsi + Stokis cannot see those menus and direct URL access redirects to dashboard; (3) backend GET /payout and GET /special-reward return 403 for admin_provinsi/stokis; (4) /bonus/report, /plan, /bonus/preview do NOT leak payout_percent/company_percent/company_bv/total_payout_bv/reward_pool_bv/reward_allocation/reward_qualifiers/reward_rate/reward_qualify_rank for non-pusat; (5) Admin Provinsi dashboard has no trend/stokis_fee and includes scope_note; Admin Pusat dashboard still has both; (6) Marketing Plan shows Special Reward 2% only for Admin Pusat and 'dikelola langsung oleh Pusat' for others; (7) Slip Bonus table and bonus report rows no longer contain Special Reward line. All frontend testids on /special-reward (reward-pool/omset/company/headroom/privacy-note/catatan/range-info/filter) + bonus report (bonus-earner-count, bonus-sharing-pool) + dashboard (kpi-stokis-fee-total, dashboard-scope-note) found as expected.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "passed_tests": [
+    "Backend: admin_provinsi + stokis -> 403 on GET /api/payout and GET /api/special-reward",
+    "Backend: admin_provinsi + stokis -> 200 on GET /api/bonus/report with no leaked payout/reward fields",
+    "Backend: /plan for non-pusat without reward_pool_rate/reward_qualify_rank",
+    "Backend: /bonus/preview for non-pusat without reward_pool_bv/reward_allocation/reward_qualifiers/reward_rate/reward_qualify_rank",
+    "Backend: /dashboard admin_provinsi without trend/stokis_fees/stokis_fee_total + has scope_note",
+    "Backend: Admin Pusat GET /api/payout -> total_payout_percent=21%, /api/special-reward -> pool 200 BV (2%)",
+    "Backend: /bonus/preview results have no bonus_reward field and no Special Reward lines in rincian",
+    "Frontend: Admin Pusat sidebar shows 'Payout & Omset' and 'Special Reward'; /payout and /special-reward render all expected data-testids",
+    "Frontend: Admin Provinsi sidebar hides both; direct URL /payout and /special-reward redirect to '/'",
+    "Frontend: Stokis sidebar hides both; direct URL redirects to '/'",
+    "Frontend: Admin Pusat dashboard shows Tren Omset + FEE PERANTARA + no scope-note; Admin Provinsi dashboard hides both and shows dashboard-scope-note",
+    "Frontend: /bonus (Laporan Bonus) table has no 'Special Reward' column, no 'Persentase Payout' KPI, bonus-earner-count & bonus-sharing-pool testids present",
+    "Frontend: /statement table does not contain Special Reward row",
+    "Frontend: /plan Admin Pusat shows Special Reward 2%; Admin Provinsi shows 'dikelola langsung oleh Pusat'"
+  ],
+  "test_report_links": [
+    "/app/test_akses_payout_reward.py",
+    "/app/backend/tests/test_placement_binary.py",
+    "/app/backend/tests/test_case_insensitive_input.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "test_akses_payout_reward.py left residual accounts ZZPROV1/ZZSTOK1 from a prior run (teardown skipped when creation failed with 400). Changed to ZZPROV9/ZZSTOK9 to continue; cleanup now succeeds. Suggest making the script idempotent (delete first, then create) for future reuse.",
+    "Protected route in App.js correctly redirects non-authorized roles for /payout and /special-reward to '/'. Consider showing a toast/notice when redirected for clarity."
+  ],
+  "updated_files": [
+    "/app/test_akses_payout_reward.py (changed temp IDs ZZPROV1->ZZPROV9, ZZSTOK1->ZZSTOK9 to avoid clash with residual accounts)"
+  ],
+  "success_rate": {"backend": "100% (18/18 assertions)", "frontend": "100% (32/32 effective checks)"},
+  "test_credentials": "ADMIN/admin123. Temporary ZZPROV9 (admin_provinsi) and ZZSTOK9 (stokis) created with password uji123456 and deleted after tests.",
+  "seed_data_creation": "Created & deleted ZZPROV8/ZZSTOK8 (frontend) and ZZPROV9/ZZSTOK9 (backend) temporary accounts. No residual data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Laporan Bonus route is /bonus (NOT /bonus-report). test_placement_binary.py still requires MB00001 seed. Admin dashboard uses UPPERCASE labels (FEE PERANTARA, OMSET PERKEMBANGAN). 'Special Reward' string will appear in Admin Pusat sidebar nav of every page -- restrict checks to <table> or specific data-testids.",
+  "rca of the issue": "N/A - all requested access-control + visibility changes verified working end-to-end."
+}

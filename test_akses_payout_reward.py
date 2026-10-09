@@ -36,12 +36,12 @@ def mk(role, mid, name, province="Jawa Barat", city="Kota Bandung", sponsor=None
     return r.json()["member"]
 
 
-mk("admin_provinsi", "ZZPROV1", "UJI Admin Provinsi")
-mk("stokis", "ZZSTOK1", "UJI Stokis")
+mk("admin_provinsi", "ZZPROV9", "UJI Admin Provinsi")
+mk("stokis", "ZZSTOK9", "UJI Stokis")
 
 try:
-    P = login("ZZPROV1", "uji123456")
-    S = login("ZZSTOK1", "uji123456")
+    P = login("ZZPROV9", "uji123456")
+    S = login("ZZSTOK9", "uji123456")
 
     for nama, sess in (("admin_provinsi", P), ("stokis", S)):
         for ep in ("/payout?mode=period", "/special-reward?mode=period"):

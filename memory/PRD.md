@@ -49,6 +49,25 @@ melainkan otomatis turun, sponsor **tidak dibatasi**.
   `/app/backend/tests/test_placement_binary.py` (10/10 lulus dari testing agent).
 - Database preview dibersihkan dari data uji.
 
+### 2026-06 (turn ketiga)
+- **Payout & Omset kini KHUSUS Admin Pusat**: entri `payout` dihapus dari `core.PAGES`,
+  `GET /api/payout` memakai `require_roles("admin_pusat")`, route & menu frontend
+  dibatasi ke Admin Pusat. Halaman Laporan Bonus memakai endpoint baru
+  `GET /api/bonus/report` (tanpa persentase payout / sisa perusahaan / pool reward).
+- **Dashboard Admin Provinsi** tidak lagi memuat data nasional: grafik tren dan KPI
+  Fee Perantara Stokis hanya untuk Admin Pusat; ditambah `scope_note` bahwa angka
+  hanya mencakup wilayah wewenangnya.
+- **Special Reward tidak transparan**: pool 2% tetap dihitung otomatis agar pusat tahu
+  dana tersedia dan tidak melebihi payout, TAPI tidak lagi masuk `total_bonus_bv`,
+  tidak ada baris rumus di rincian member, dan field `bonus_reward` dihapus dari hasil.
+  `core.strip_reward()` menghapus semua data reward dari respons untuk peran non-pusat
+  (`/bonus/runs`, `/bonus/preview`, `/bonus/run/{key}`, `/simulator`, `/plan`).
+- Halaman baru **`/special-reward`** (Admin Pusat): dana reward, omset, sisa perusahaan,
+  sisa setelah reward dibagikan, dana per periode, daftar member yang memenuhi
+  kualifikasi + alokasi rata sebagai acuan, dan catatan bahwa pembagian bisa BV/non-BV.
+- Diverifikasi: `/app/test_akses_payout_reward.py` lulus semua + testing agent 100%
+  (backend 18/18, frontend 32/32).
+
 ### 2026-06 (turn kedua)
 - **Crash `insertBefore` / NotFoundError diperbaiki**: penyebabnya fitur Terjemahkan
   otomatis Chrome yang mengubah text node sehingga React gagal commit. Ditambahkan
