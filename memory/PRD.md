@@ -49,6 +49,20 @@ melainkan otomatis turun, sponsor **tidak dibatasi**.
   `/app/backend/tests/test_placement_binary.py` (10/10 lulus dari testing agent).
 - Database preview dibersihkan dari data uji.
 
+### 2026-06 (turn kedua)
+- **Crash `insertBefore` / NotFoundError diperbaiki**: penyebabnya fitur Terjemahkan
+  otomatis Chrome yang mengubah text node sehingga React gagal commit. Ditambahkan
+  `<html lang="id" translate="no">`, `<meta name="google" content="notranslate">`,
+  dan `#root.notranslate` pada `public/index.html`.
+- `components/ErrorBoundary.jsx` baru — menangkap error render, memberi pesan khusus
+  bila penyebabnya penerjemah browser, plus tombol "Muat ulang". Dipasang di `App.js`.
+- **Typing normal (tidak lagi selalu HURUF BESAR)**: `.toUpperCase()` dihapus dari semua
+  `onChange` di `Login.jsx`, `Members.jsx` (ID Member), `MemberPicker.jsx` (Sponsor /
+  Placement), `Simulator.jsx` (ID / Sponsor / Placement). Normalisasi uppercase kini
+  hanya saat submit (frontend) dan di server (`routes_people.py` sudah `.strip().upper()`).
+- Diverifikasi: login dengan `admin` huruf kecil berhasil, pendaftaran member dengan
+  sponsor huruf kecil berhasil, 15 halaman load tanpa error (testing agent 100% lulus).
+
 ### Sebelumnya (dari repo)
 - Auth + RBAC 4 peran, CRUD member, wilayah Indonesia, stok/stokis,
   engine bonus 7 jenis, simulator bertingkat (levels) dengan verifikasi biner,

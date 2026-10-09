@@ -1,0 +1,43 @@
+{
+  "summary": "Verified: (1) semua input teks tidak lagi dipaksa HURUF BESAR saat diketik di Login, MemberForm (name, member_id, phone, email, password, bank_name, bank_account), Sponsor/Placement MemberPicker, dan Simulator (sim-id/sim-sponsor/sim-placement). Normalisasi toUpperCase hanya terjadi saat submit (frontend) dan di server (routes_people). (2) Login 'admin'/'admin123' huruf kecil berhasil. (3) Create member dengan sponsor_id huruf kecil berhasil + member_id dinormalkan ke uppercase di DB. (4) Simulator /api/simulator menerima payload yang di-normalize ke uppercase dan menghasilkan hasil. (5) Semua 15 halaman (Dashboard, Member, Admin & Stokis, Jaringan, Omset, Tutup Buku, Laporan Bonus, Payout, Slip Bonus, Katalog Produk, Stok, Simulator, Marketing Plan, Pengaturan, Pengumuman) load tanpa memicu ErrorBoundary. (6) index.html meng-expose lang='id' translate='no', meta google=notranslate, #root class=notranslate.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Backend: POST /api/auth/login member_id='admin' (lowercase) -> 200, user.role=admin_pusat",
+    "Backend: POST /api/auth/login member_id='AdMiN' (mixed case) -> 200",
+    "Backend: POST /api/members dengan member_id/sponsor_id/placement_id huruf kecil -> 200, server normalisasi ke UPPERCASE",
+    "Backend: POST /api/simulator payload huruf kecil (dinormalkan) -> 200 dengan 2 results",
+    "Backend: GET /api/members/options?q=admin -> ADMIN termasuk hasil (case-insensitive)",
+    "Frontend: Login input huruf kecil 'admin' tetap tampil 'admin' lalu login sukses",
+    "Frontend: Semua field teks pada form Tambah Pengguna (form-name/form-member-id/form-phone/form-email/form-password/form-bank-name/form-bank-account) menerima huruf kecil apa adanya",
+    "Frontend: form-sponsor-input menerima huruf kecil (tidak dipaksa uppercase)",
+    "Frontend: Simulator sim-id-0 menerima huruf kecil; tombol Hitung menghasilkan sim-detail",
+    "Frontend: Navigasi ke 15 halaman tanpa memicu data-testid='error-boundary'",
+    "Frontend: <html lang='id' translate='no'>, meta[name='google']=notranslate, #root.className mengandung 'notranslate'"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_case_insensitive_input.py",
+    "/app/test_reports/pytest/case_insensitive.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Dev-only React hydration warning (bukan error aplikasi): emergent devtool-wrapper menyisipkan <span data-ve-dynamic style='display:contents'> di dalam <option> pada NetworkPage.jsx:69 dan Products.jsx:136 sehingga React mengeluarkan warning 'In HTML, <span> cannot be a child of <option>'. Tidak mempengaruhi fungsionalitas atau build produksi tapi membuat console berisik. Aman diabaikan karena berasal dari instrumentation x-excluded='true'.",
+    "Simulator.jsx baris 47-49 benar: nilai input dinormalkan .trim().toUpperCase() saat submit sehingga user bebas mengetik huruf kecil. Konsisten dengan backend normalisasi.",
+    "ErrorBoundary pembedaan pesan lewat regex insertBefore|removeChild|NotFoundError bagus untuk kasus Chrome Translate; tetap tampilkan error.message untuk debugging.",
+    "MemberForm.member_id masih opsional dan dinormalkan di backend (routes_people:343). Front-end tidak melakukan uppercase saat mengetik (benar sesuai permintaan)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_case_insensitive_input.py (new)"
+  ],
+  "success_rate": {"backend": "100% (5/5)", "frontend": "100% core flows verified"},
+  "test_credentials": "ADMIN/admin123 (login dengan 'admin' lowercase juga sukses)",
+  "seed_data_creation": "Satu member sementara TC_<uuid> dibuat di bawah member root pertama lalu dihapus. Tidak ada residu.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend regression suite untuk case-insensitive input: /app/backend/tests/test_case_insensitive_input.py (jalankan dengan `REACT_APP_BACKEND_URL=<url> pytest backend/tests/test_case_insensitive_input.py -n 0`). test_placement_binary.py sekarang gagal karena DB preview dibersihkan (tidak ada MB00001). Ini bukan regresi fitur -- hanya kebutuhan seed; abaikan jika iterasi fokus bukan placement.",
+  "rca of the issue": "N/A -- bug sebelumnya (crash insertBefore saat Chrome Translate + semua teks tampil UPPERCASE) sudah selesai di iterasi ini. Perbaikan utama: (a) <html lang='id' translate='no'> + #root class=notranslate mencegah Google Translate mengganti teks DOM, (b) ErrorBoundary menangkap error DOM dengan pesan khusus translate, (c) semua onChange di Login/Members/MemberPicker/Simulator tidak lagi memaksa .toUpperCase() -- normalisasi hanya terjadi saat submit."
+}
