@@ -182,7 +182,7 @@ export function MemberForm({ open, onClose, onSaved, roleOptions, defaultRole = 
             <div className="grid gap-1">
               <Label className={LBL}>ID Member (opsional)</Label>
               <Input className="h-9 font-mono text-[13px]" placeholder="otomatis" value={f.member_id}
-                onChange={(e) => set('member_id', e.target.value.toUpperCase())} data-testid="form-member-id" />
+                onChange={(e) => set('member_id', e.target.value)} data-testid="form-member-id" />
             </div>
             <div className="grid gap-1">
               <Label className={LBL}>Sandi awal</Label>

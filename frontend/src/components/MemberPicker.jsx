@@ -41,8 +41,8 @@ export default function MemberPicker({
         data-testid={`${testid}-input`}
         onFocus={() => setOpen(true)}
         onChange={(e) => {
-          setQ(e.target.value.toUpperCase());
-          onChange(e.target.value.toUpperCase());
+          setQ(e.target.value);
+          onChange(e.target.value);
           setOpen(true);
         }}
         onBlur={() => setTimeout(() => setOpen(false), 200)}

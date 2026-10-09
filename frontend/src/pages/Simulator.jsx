@@ -44,6 +44,9 @@ export default function Simulator() {
         period_label: 'Simulasi',
         members: rows.map((r) => ({
           ...r,
+          id: String(r.id || '').trim().toUpperCase(),
+          sponsor_id: String(r.sponsor_id || '').trim().toUpperCase(),
+          placement_id: String(r.placement_id || '').trim().toUpperCase(),
           appv_perkembangan: Number(r.appv_perkembangan || 0),
           appv: Number(r.appv || 0),
           atnpv: Number(r.atnpv || 0),
@@ -110,10 +113,10 @@ export default function Simulator() {
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={i} className="border-b last:border-0">
-                    <td className="px-1 py-1"><Input className="h-9 w-16 font-mono" value={r.id} onChange={(e) => setCell(i, 'id', e.target.value.toUpperCase())} data-testid={`sim-id-${i}`} /></td>
+                    <td className="px-1 py-1"><Input className="h-9 w-16 font-mono" value={r.id} onChange={(e) => setCell(i, 'id', e.target.value)} data-testid={`sim-id-${i}`} /></td>
                     <td className="px-1 py-1"><Input className="h-9 w-32" value={r.name} onChange={(e) => setCell(i, 'name', e.target.value)} /></td>
-                    <td className="px-1 py-1"><Input className="h-9 w-16 font-mono" value={r.sponsor_id} onChange={(e) => setCell(i, 'sponsor_id', e.target.value.toUpperCase())} data-testid={`sim-sponsor-${i}`} /></td>
-                    <td className="px-1 py-1"><Input className="h-9 w-16 font-mono" value={r.placement_id} onChange={(e) => setCell(i, 'placement_id', e.target.value.toUpperCase())} data-testid={`sim-placement-${i}`} /></td>
+                    <td className="px-1 py-1"><Input className="h-9 w-16 font-mono" value={r.sponsor_id} onChange={(e) => setCell(i, 'sponsor_id', e.target.value)} data-testid={`sim-sponsor-${i}`} /></td>
+                    <td className="px-1 py-1"><Input className="h-9 w-16 font-mono" value={r.placement_id} onChange={(e) => setCell(i, 'placement_id', e.target.value)} data-testid={`sim-placement-${i}`} /></td>
                     <td className="px-1 py-1">
                       <select className="h-9 rounded border bg-background px-1" value={r.membership} onChange={(e) => setCell(i, 'membership', e.target.value)} data-testid={`sim-membership-${i}`}>
                         {MEMBERSHIPS.map((m) => <option key={m} value={m}>{m}</option>)}

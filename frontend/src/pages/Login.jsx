@@ -56,7 +56,7 @@ export default function Login() {
               <Input
                 className="h-11 font-mono"
                 value={id}
-                onChange={(e) => setId(e.target.value.toUpperCase())}
+                onChange={(e) => setId(e.target.value)}
                 placeholder="MB00001"
                 data-testid="login-member-id-input"
                 autoCapitalize="characters"
